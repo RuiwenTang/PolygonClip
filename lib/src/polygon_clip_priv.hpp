@@ -14,6 +14,8 @@ bool operator<(const Point &p1, const Point &p2);
 
 bool operator==(const Point &p1, const Point &p2);
 
+bool scalar_is_zero(float t);
+
 class PolygonIter {
 public:
   PolygonIter(const std::vector<Vertex *> &polygons);
@@ -29,7 +31,7 @@ private:
   size_t m_index;
   Vertex *m_curr_head;
   Vertex *m_current;
-  const std::vector<Vertex *> m_polygon;
+  const std::vector<Vertex *>& m_polygon;
 };
 
 class ClipAlgorithm {

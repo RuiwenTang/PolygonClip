@@ -74,6 +74,12 @@ Vertex *Polygon::allocate_vertex(const Point &p) {
   return m_vertex.back().get();
 }
 
+Vertex* Polygon::allocate_vertex(Vertex *p1, Vertex *p2, float t) {
+  // point between p1 and p2
+  auto p = p1->point * (1.f - t) + p2->point * t;
+  return allocate_vertex(p);
+}
+
 Polygon Polygon::Clip(const Polygon &subject, const Polygon &clipping) {
   return ClipAlgorithm::do_clip(Polygon(subject), Polygon(clipping));
 }

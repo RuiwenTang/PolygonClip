@@ -2,6 +2,7 @@
 #include "polygon_clip_math.hpp"
 #include <algorithm>
 #include <cassert>
+#include <cstdint>
 
 namespace pc {
 
@@ -12,6 +13,8 @@ bool scalar_equal(Scalar s1, Scalar s2) {
 }
 
 bool scalar_less(Scalar s1, Scalar s2) { return s1 - s2 > -kFloatNearZero; }
+
+bool scalar_is_zero(float t) { return scalar_equal(t, 0.f); }
 
 Point operator-(const Point &p1, const Point &p2) {
   return Point(p1.x - p2.x, p1.y - p2.y);
@@ -30,6 +33,47 @@ bool operator<(const Point &p1, const Point &p2) {
 bool operator==(const Point &p1, const Point &p2) {
   return scalar_equal(p1.x, p2.x) && scalar_equal(p1.y, p2.y);
 }
+
+PolygonIter::PolygonIter(const std::vector<Vertex *> &polygons)
+    : m_polygon(polygons) {
+  m_index = 0;
+  if (m_polygon.empty()) {
+    m_curr_head = nullptr;
+    m_current = nullptr;
+  } else {
+    m_curr_head = m_polygon.front();
+    m_current = m_curr_head;
+  }
+}
+
+bool PolygonIter::has_next() {
+  if (m_current == nullptr) {
+    return false;
+  }
+
+  if (m_current->next == m_curr_head && m_index == m_polygon.size() - 1) {
+    return false;
+  }
+
+  return true;
+}
+
+void PolygonIter::move_next() {
+  if (m_current->next != m_curr_head) {
+    m_current = m_current->next;
+    return;
+  }
+
+  if (m_index == m_polygon.size() - 1) {
+    return;
+  }
+
+  m_index++;
+  m_curr_head = m_polygon[m_index];
+  m_current = m_curr_head;
+}
+
+Vertex *PolygonIter::current() { return m_current; }
 
 Polygon ClipAlgorithm::do_clip(Polygon subject, Polygon clipping) {
   Polygon result;
@@ -180,6 +224,68 @@ void ClipAlgorithm::process_intersection() {
   }
 
   assert((intersection_count % 2) == 0);
+}
+
+void ClipAlgorithm::mark_vertices(MarkType type) {
+  bool no_intersection = true;
+  uint32_t inner_indicator = 0;
+
+  // loop for polygon 1
+
+  // false  : exit
+  // true   : entry
+  bool status = false;
+
+  PolygonIter clip_iter(m_clipping.get_vertices());
+
+  if (m_subject.contains(clip_iter.current()->point)) {
+    status = false;
+    inner_indicator = 1;
+  } else {
+    status = true;
+    inner_indicator = 0;
+  }
+
+  while (clip_iter.has_next()) {
+    auto current = clip_iter.current();
+
+    if (current->intersect) {
+      current->entry_exit = status;
+      status = !status;
+
+      if (no_intersection) {
+        no_intersection = false;
+      }
+    }
+
+    clip_iter.move_next();
+  }
+
+  // loop for polygon 2
+  PolygonIter subj_iter(m_subject.get_vertices());
+
+  if (m_clipping.contains(subj_iter.current()->point)) {
+    status = false;
+    inner_indicator = 2;
+  } else {
+    status = true;
+  }
+
+  while (subj_iter.has_next()) {
+    auto current = subj_iter.current();
+
+    if (current->intersect) {
+      current->entry_exit = status;
+      status = !status;
+
+      if (no_intersection) {
+        no_intersection = false;
+      }
+    }
+  }
+
+  // polygon 2 is inside polygon 1
+  
 }
 
 } // namespace pc

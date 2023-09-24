@@ -58,6 +58,8 @@ public:
 
   const std::vector<Vertex *> &get_vertices() const { return m_sub_polygons; }
 
+  bool contains(const Point &p) const;
+
   /**
    * Doing clip operation on subject, and output the subpolygon inside clipping
    *
