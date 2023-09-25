@@ -48,6 +48,41 @@ void Polygon::append_vertices(const std::vector<Point> &points) {
   m_sub_polygons.emplace_back(head);
 }
 
+bool Polygon::contains(const Point &p) const {
+  bool contains = false;
+  int32_t winding_num = 0;
+
+  PolygonIter iter(m_sub_polygons);
+
+  while (iter.has_next()) {
+    auto curr = iter.current();
+    auto next = curr->next;
+
+    if (((next->point.y > p.y) != (curr->point.y > p.y)) &&
+        (p.x < (curr->point.x - next->point.x) * (p.y - next->point.y) /
+                       (curr->point.y - next->point.y) +
+                   next->point.x)) {
+      contains = !contains;
+
+      if (curr->point == next->point ||
+          scalar_is_zero(curr->point.x - next->point.x)) {
+        iter.move_next();
+        continue;
+      }
+
+      if (curr->point < next->point) {
+        winding_num += 1;
+      } else {
+        winding_num -= 1;
+      }
+    }
+
+    iter.move_next();
+  }
+
+  return contains;
+}
+
 Vertex *Polygon::allocate_vertex(const Point &p) {
   if (!m_left_top) {
     m_left_top = p;
@@ -74,7 +109,7 @@ Vertex *Polygon::allocate_vertex(const Point &p) {
   return m_vertex.back().get();
 }
 
-Vertex* Polygon::allocate_vertex(Vertex *p1, Vertex *p2, float t) {
+Vertex *Polygon::allocate_vertex(Vertex *p1, Vertex *p2, float t) {
   // point between p1 and p2
   auto p = p1->point * (1.f - t) + p2->point * t;
   return allocate_vertex(p);

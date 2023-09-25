@@ -47,11 +47,7 @@ PolygonIter::PolygonIter(const std::vector<Vertex *> &polygons)
 }
 
 bool PolygonIter::has_next() {
-  if (m_current == nullptr) {
-    return false;
-  }
-
-  if (m_current->next == m_curr_head && m_index == m_polygon.size() - 1) {
+  if (m_loop_end && m_index == m_polygon.size() - 1) {
     return false;
   }
 
@@ -59,8 +55,11 @@ bool PolygonIter::has_next() {
 }
 
 void PolygonIter::move_next() {
-  if (m_current->next != m_curr_head) {
+  if (!m_loop_end) {
     m_current = m_current->next;
+    if (m_current == m_curr_head) {
+      m_loop_end = true;
+    }
     return;
   }
 
@@ -71,6 +70,7 @@ void PolygonIter::move_next() {
   m_index++;
   m_curr_head = m_polygon[m_index];
   m_current = m_curr_head;
+  m_loop_end = false;
 }
 
 Vertex *PolygonIter::current() { return m_current; }
@@ -82,14 +82,26 @@ Polygon ClipAlgorithm::do_clip(Polygon subject, Polygon clipping) {
 
   algorithm.process_intersection();
 
-  if (algorithm.m_intersect_count == 0) {
-    // no intersection
-    // means empty result or subject is inside clipping
+  bool no_intersection;
+  uint32_t intersect_index;
+
+  std::tie(no_intersection, intersect_index) = algorithm.mark_vertices();
+
+  // there is no intersection points
+  if (no_intersection) {
+    if (intersect_index == 0) {
+      // there is no intersection area between these two polygon
+      return result;
+    } else if (intersect_index == 1) {
+      // clipping is inside subject
+      return algorithm.m_clipping;
+    } else if (intersect_index == 2) {
+      // subject is inside clipping
+      return algorithm.m_subject;
+    }
 
     return result;
   }
-
-  algorithm.mark_vertices(MarkType::kIntersection);
 
   std::vector<Vertex *> intersection_points;
   for (auto &vert : algorithm.m_subject.m_vertex) {
@@ -158,9 +170,7 @@ void ClipAlgorithm::process_intersection() {
   while (subj_iter.has_next()) {
     auto current = subj_iter.current();
 
-    subj_iter.move_next();
-
-    PolygonIter clip_iter(m_subject.get_vertices());
+    PolygonIter clip_iter(m_clipping.get_vertices());
 
     std::vector<VertexDist> intersect_list;
 
@@ -192,6 +202,8 @@ void ClipAlgorithm::process_intersection() {
 
         // insert i1 into intersect list
         intersect_list.emplace_back(VertexDist(i1, t1));
+
+        clip_iter.move_next();
       }
 
       clip_iter.move_next();
@@ -218,6 +230,10 @@ void ClipAlgorithm::process_intersection() {
 
       current->next = head;
       head->prev = current;
+
+      for (size_t i = 0; i < intersect_list.size(); i++) {
+        subj_iter.move_next();
+      }
     }
 
     subj_iter.move_next();
@@ -226,7 +242,7 @@ void ClipAlgorithm::process_intersection() {
   assert((intersection_count % 2) == 0);
 }
 
-void ClipAlgorithm::mark_vertices(MarkType type) {
+std::tuple<bool, uint32_t> ClipAlgorithm::mark_vertices() {
   bool no_intersection = true;
   uint32_t inner_indicator = 0;
 
@@ -282,10 +298,11 @@ void ClipAlgorithm::mark_vertices(MarkType type) {
         no_intersection = false;
       }
     }
+
+    subj_iter.move_next();
   }
 
-  // polygon 2 is inside polygon 1
-  
+  return std::make_tuple(no_intersection, inner_indicator);
 }
 
 } // namespace pc

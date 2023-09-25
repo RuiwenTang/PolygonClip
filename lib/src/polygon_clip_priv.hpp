@@ -2,6 +2,8 @@
 
 #include "polygon_clip.hpp"
 
+#include <tuple>
+
 namespace pc {
 
 Point operator-(const Point &p1, const Point &p2);
@@ -31,7 +33,8 @@ private:
   size_t m_index;
   Vertex *m_curr_head;
   Vertex *m_current;
-  const std::vector<Vertex *>& m_polygon;
+  bool m_loop_end = false;
+  const std::vector<Vertex *> &m_polygon;
 };
 
 class ClipAlgorithm {
@@ -61,7 +64,17 @@ private:
 
   void process_intersection();
 
-  void mark_vertices(MarkType type);
+  /**
+   * Mark polygon intersectons
+   *
+   * {
+   *   no_intersection: true if there is no intersection points
+   *   intersection_index: 1 means clipping inside subject, 2 means subject
+   *                        inside clipping
+   * }
+   * @return std::tuple<bool, uint32_t> { no_intersection, intersection_index }
+   */
+  std::tuple<bool, uint32_t> mark_vertices();
 
 private:
   Polygon m_subject;
