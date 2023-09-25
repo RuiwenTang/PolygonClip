@@ -1,13 +1,18 @@
 
+#include "example.hpp"
 #include "polygon_clip.hpp"
 
 #include <iostream>
 
 int main(int argc, const char **argv) {
 
-  std::vector<pc::Point> points{{0, 0}, {100, 0}, {100, 100}, {0, 100}};
+  std::vector<pc::Point> points{
+      {100, 50}, {10, 79}, {65, 2}, {65, 98}, {10, 21},
+  };
 
-  std::vector<pc::Point> points2{{50, 50}, {150, 50}, {150, 150}, {50, 150}};
+  std::vector<pc::Point> points2{
+      {98, 63}, {4, 68}, {77, 8}, {52, 100}, {19, 12},
+  };
 
   pc::Polygon subject;
   subject.append_vertices(points);
@@ -28,6 +33,32 @@ int main(int argc, const char **argv) {
       curr = curr->next;
     }
   }
+
+  pc::example::App app("clip-example");
+
+  app.init();
+
+  pc::example::PolygonRender p1_render(800, 800, 50.f, 50.f);
+  p1_render.init(subject, true);
+
+  pc::example::PolygonRender p2_render(800, 800, 50.f, 50.f);
+  p2_render.init(clipping, true);
+
+  pc::example::PolygonRender res_render(800, 800, 50.f, 50.f);
+  res_render.init(result, false);
+
+  app.loop([&p1_render, &p2_render, &res_render]() {
+    glClearColor(1.f, 1.f, 1.f, 1.f);
+    glClearStencil(0);
+    glClear(GL_COLOR_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+
+    p1_render.draw({1.f, 0.f, 0.f, 1.f});
+    p2_render.draw({0.f, 1.f, 0.f, 1.f});
+
+    res_render.draw({0.f, 0.f, 1.f, 1.f});
+  });
+
+  app.terminate();
 
   return 0;
 }
