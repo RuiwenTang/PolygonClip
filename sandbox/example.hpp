@@ -17,13 +17,7 @@ class GlProgram;
 
 class PolygonRender {
 public:
-  enum class DrawMode {
-    kTrialgles,
-    kLineLoop,
-  };
-
   struct DrawCmd {
-    DrawMode mode;
     uint32_t offset;
     uint32_t count;
   };

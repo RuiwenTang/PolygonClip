@@ -124,23 +124,6 @@ private:
   GLint m_color_location = -1;
 };
 
-enum class Orientation {
-  kLinear,
-  kClockWise,
-  kAntiClockWise,
-};
-
-Orientation Calculateorientation(const Point &p, const Point &q,
-                                 const Point &r) {
-  float val = (q.y - p.y) * (r.x - q.x) - (q.x - p.x) * (r.y - q.y);
-
-  if (std::abs(val) <= 0.0001f) {
-    return Orientation::kLinear;
-  }
-
-  return (val > 0.f) ? Orientation::kClockWise : Orientation::kAntiClockWise;
-}
-
 PolygonRender::PolygonRender(uint32_t screen_width, uint32_t screen_height,
                              float translate_x, float translate_y) {
   m_mvp = {
@@ -276,7 +259,7 @@ void PolygonRender::init_stroke(const pc::Polygon &polygon) {
       curr = curr->next;
     } while (curr != head);
 
-    m_cmds.emplace_back(DrawCmd{DrawMode::kLineLoop, offset, count});
+    m_cmds.emplace_back(DrawCmd{offset, count});
   }
 
   glBindVertexArray(m_vao);
@@ -314,7 +297,7 @@ void PolygonRender::init_fill(const pc::Polygon &polygon) {
       stage_index.emplace_back(j);
       stage_index.emplace_back(k);
 
-      m_cmds.emplace_back(DrawCmd{DrawMode::kTrialgles, offset, 3});
+      m_cmds.emplace_back(DrawCmd{offset, 3});
 
       continue;
     }
@@ -350,7 +333,7 @@ void PolygonRender::init_fill(const pc::Polygon &polygon) {
       count += 3;
     } while (curr != head);
 
-    m_cmds.emplace_back(DrawCmd{DrawMode::kTrialgles, offset, count});
+    m_cmds.emplace_back(DrawCmd{offset, count});
   }
 
   glBindVertexArray(m_vao);

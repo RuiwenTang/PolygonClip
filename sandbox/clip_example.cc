@@ -58,6 +58,10 @@ int main(int argc, const char **argv) {
     res_render.draw({0.f, 0.f, 1.f, 1.f});
   });
 
+  p1_render.terminate();
+  p2_render.terminate();
+  res_render.terminate();
+
   app.terminate();
 
   return 0;
