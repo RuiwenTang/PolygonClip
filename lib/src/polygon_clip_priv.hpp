@@ -67,6 +67,16 @@ public:
    */
   static Polygon do_union(Polygon subject, Polygon clipping);
 
+  /**
+   * Calculate the different part which is inside subject but not in clipping
+   *
+   * @subject   Copy of the subject polygon
+   * @clipping  Copy of the clipping polygon
+   *
+   * @return difference result
+   */
+  static Polygon do_diff(Polygon subject, Polygon clipping);
+
 private:
   ClipAlgorithm(Polygon subject, Polygon clipping)
       : m_subject(std::move(subject)), m_clipping(std::move(clipping)) {}

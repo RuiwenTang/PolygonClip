@@ -50,7 +50,7 @@ public:
   // copy is depth clone
   Polygon(const Polygon &other);
   // merge two polygon with depth clone
-  Polygon(const Polygon &p1, const Polygon &p2);
+  Polygon(const Polygon &p1, const Polygon &p2, bool pr_reserve = false);
 
   /**
    * Append a closed shape into this polygon
@@ -75,6 +75,13 @@ public:
    *
    */
   static Polygon Union(const Polygon &subject, const Polygon &clipping);
+
+  /**
+   * Calculate the area inside subject but not in clipping
+   *
+   *
+   */
+  static Polygon Diff(const Polygon &subject, const Polygon &clipping);
 
 private:
   Vertex *allocate_vertex(const Point &p);

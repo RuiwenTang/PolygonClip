@@ -221,6 +221,86 @@ Polygon ClipAlgorithm::do_union(Polygon subject, Polygon clipping) {
   }
 }
 
+Polygon ClipAlgorithm::do_diff(Polygon subject, Polygon clipping) {
+  Polygon result;
+
+  ClipAlgorithm algorithm(std::move(subject), std::move(clipping));
+
+  algorithm.process_intersection();
+
+  bool no_intersection;
+  uint32_t inner_indicator;
+
+  std::tie(no_intersection, inner_indicator) = algorithm.mark_vertices();
+
+  if (!no_intersection) {
+    std::vector<Vertex *> intersection_points;
+    for (auto &vert : algorithm.m_subject.m_vertex) {
+      if (vert->intersect) {
+        intersection_points.emplace_back(vert.get());
+      }
+    }
+
+    for (auto vertex : intersection_points) {
+      if (vertex->marked) {
+        continue;
+      }
+
+      vertex->marked = true;
+      bool self = true;
+
+      std::vector<Point> pts;
+
+      auto curr = vertex;
+
+      pts.emplace_back(curr->point);
+
+      do {
+        if (curr->entry_exit) {
+          do {
+            if (self) {
+              curr = curr->prev;
+            } else {
+              curr = curr->next;
+            }
+
+            pts.emplace_back(curr->point);
+          } while (!curr->intersect);
+        } else {
+          do {
+            if (self) {
+              curr = curr->next;
+            } else {
+              curr = curr->prev;
+            }
+
+            pts.emplace_back(curr->point);
+          } while (!curr->intersect);
+        }
+
+        self = !self;
+        curr->marked = true;
+        curr = curr->neighbour;
+        curr->marked = true;
+      } while (curr != vertex);
+
+      result.append_vertices(pts);
+    }
+
+    return result;
+  }
+
+  if (inner_indicator == 0) {
+    // there is no common area between two polygons
+    return Polygon(algorithm.m_subject);
+  } else if (inner_indicator == 2) {
+    // subject is inside clipping, no different part
+    return result;
+  }
+
+  return Polygon(algorithm.m_subject, algorithm.m_clipping, true);
+}
+
 struct VertexDist {
   Vertex *vert;
   float t;

@@ -25,7 +25,7 @@ Polygon::Polygon(const Polygon &other) {
   }
 }
 
-Polygon::Polygon(const Polygon &p1, const Polygon &p2) {
+Polygon::Polygon(const Polygon &p1, const Polygon &p2, bool p2_reserve) {
 
   for (auto v : p1.m_sub_polygons) {
     auto p = v;
@@ -51,11 +51,19 @@ Polygon::Polygon(const Polygon &p1, const Polygon &p2) {
     std::vector<Point> points{};
     points.emplace_back(p->point);
 
-    p = p->next;
+    if (p2_reserve) {
+      p = p->prev;
+    } else {
+      p = p->next;
+    }
 
     while (p != v) {
       points.emplace_back(p->point);
-      p = p->next;
+      if (p2_reserve) {
+        p = p->prev;
+      } else {
+        p = p->next;
+      }
     }
 
     if (points.size() < 3) {
@@ -162,6 +170,10 @@ Polygon Polygon::Clip(const Polygon &subject, const Polygon &clipping) {
 
 Polygon Polygon::Union(const Polygon &subject, const Polygon &clipping) {
   return ClipAlgorithm::do_union(Polygon(subject), Polygon(clipping));
+}
+
+Polygon Polygon::Diff(const Polygon &subject, const Polygon &clipping) {
+  return ClipAlgorithm::do_diff(Polygon(subject), Polygon(clipping));
 }
 
 } // namespace pc
