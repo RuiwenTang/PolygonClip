@@ -25,6 +25,47 @@ Polygon::Polygon(const Polygon &other) {
   }
 }
 
+Polygon::Polygon(const Polygon &p1, const Polygon &p2) {
+
+  for (auto v : p1.m_sub_polygons) {
+    auto p = v;
+    std::vector<Point> points{};
+    points.emplace_back(p->point);
+
+    p = p->next;
+
+    while (p != v) {
+      points.emplace_back(p->point);
+      p = p->next;
+    }
+
+    if (points.size() < 3) {
+      continue;
+    }
+
+    this->append_vertices(points);
+  }
+
+  for (auto v : p2.m_sub_polygons) {
+    auto p = v;
+    std::vector<Point> points{};
+    points.emplace_back(p->point);
+
+    p = p->next;
+
+    while (p != v) {
+      points.emplace_back(p->point);
+      p = p->next;
+    }
+
+    if (points.size() < 3) {
+      continue;
+    }
+
+    this->append_vertices(points);
+  }
+}
+
 void Polygon::append_vertices(const std::vector<Point> &points) {
   if (points.size() < 3) {
     // not a closed path
@@ -117,6 +158,10 @@ Vertex *Polygon::allocate_vertex(Vertex *p1, Vertex *p2, float t) {
 
 Polygon Polygon::Clip(const Polygon &subject, const Polygon &clipping) {
   return ClipAlgorithm::do_clip(Polygon(subject), Polygon(clipping));
+}
+
+Polygon Polygon::Union(const Polygon &subject, const Polygon &clipping) {
+  return ClipAlgorithm::do_union(Polygon(subject), Polygon(clipping));
 }
 
 } // namespace pc

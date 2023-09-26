@@ -57,6 +57,16 @@ public:
    */
   static Polygon do_clip(Polygon subject, Polygon clipping);
 
+  /**
+   * Calculate the union area between two polygons
+   *
+   * @subject copy of the first polygon
+   * @clipping copy of the second polygon
+   *
+   * @return union result
+   */
+  static Polygon do_union(Polygon subject, Polygon clipping);
+
 private:
   ClipAlgorithm(Polygon subject, Polygon clipping)
       : m_subject(std::move(subject)), m_clipping(std::move(clipping)) {}
@@ -69,10 +79,10 @@ private:
    *
    * {
    *   no_intersection: true if there is no intersection points
-   *   intersection_index: 1 means clipping inside subject, 2 means subject
+   *   inner_indicator: 1 means clipping inside subject, 2 means subject
    *                        inside clipping
    * }
-   * @return std::tuple<bool, uint32_t> { no_intersection, intersection_index }
+   * @return std::tuple<bool, uint32_t> { no_intersection, inner_indicator }
    */
   std::tuple<bool, uint32_t> mark_vertices();
 

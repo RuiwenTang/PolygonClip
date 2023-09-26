@@ -83,19 +83,19 @@ Polygon ClipAlgorithm::do_clip(Polygon subject, Polygon clipping) {
   algorithm.process_intersection();
 
   bool no_intersection;
-  uint32_t intersect_index;
+  uint32_t inner_indicator;
 
-  std::tie(no_intersection, intersect_index) = algorithm.mark_vertices();
+  std::tie(no_intersection, inner_indicator) = algorithm.mark_vertices();
 
   // there is no intersection points
   if (no_intersection) {
-    if (intersect_index == 0) {
+    if (inner_indicator == 0) {
       // there is no intersection area between these two polygon
       return result;
-    } else if (intersect_index == 1) {
+    } else if (inner_indicator == 1) {
       // clipping is inside subject
       return algorithm.m_clipping;
-    } else if (intersect_index == 2) {
+    } else if (inner_indicator == 2) {
       // subject is inside clipping
       return algorithm.m_subject;
     }
@@ -147,6 +147,78 @@ Polygon ClipAlgorithm::do_clip(Polygon subject, Polygon clipping) {
   }
 
   return result;
+}
+
+Polygon ClipAlgorithm::do_union(Polygon subject, Polygon clipping) {
+  Polygon result;
+
+  ClipAlgorithm algorithm(std::move(subject), std::move(clipping));
+
+  algorithm.process_intersection();
+
+  bool no_intersection;
+  uint32_t inner_indicator;
+
+  std::tie(no_intersection, inner_indicator) = algorithm.mark_vertices();
+
+  // there is intersections just walk through and merge all outlines
+  if (!no_intersection) {
+    std::vector<Vertex *> intersection_points;
+    for (auto &vert : algorithm.m_subject.m_vertex) {
+      if (vert->intersect) {
+        intersection_points.emplace_back(vert.get());
+      }
+    }
+
+    for (auto vertex : intersection_points) {
+      if (vertex->marked) {
+        continue;
+      }
+
+      vertex->marked = true;
+
+      std::vector<Point> pts;
+
+      pts.emplace_back(vertex->point);
+
+      auto curr = vertex;
+
+      do {
+        if (curr->entry_exit) {
+          do {
+            curr = curr->prev;
+
+            pts.emplace_back(curr->point);
+          } while (!curr->intersect);
+        } else {
+          do {
+            curr = curr->next;
+
+            pts.emplace_back(curr->point);
+          } while (!curr->intersect);
+        }
+        curr->marked = true;
+        curr = curr->neighbour;
+        curr->marked = true;
+      } while (curr != vertex);
+
+      result.append_vertices(pts);
+    }
+
+    return result;
+  }
+
+  // there is no intersections
+  if (inner_indicator == 0) {
+    // subject and clipping has no intersect area
+    return Polygon(algorithm.m_subject, algorithm.m_clipping);
+  } else if (inner_indicator == 1) {
+    // clipping is inside subject
+    return Polygon(algorithm.m_subject);
+  } else {
+    // subject is inside clipping
+    return Polygon(algorithm.m_clipping);
+  }
 }
 
 struct VertexDist {

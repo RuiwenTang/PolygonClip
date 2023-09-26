@@ -49,6 +49,8 @@ public:
 
   // copy is depth clone
   Polygon(const Polygon &other);
+  // merge two polygon with depth clone
+  Polygon(const Polygon &p1, const Polygon &p2);
 
   /**
    * Append a closed shape into this polygon
@@ -67,6 +69,12 @@ public:
    * @clipping  clip boundary for this clip operator
    */
   static Polygon Clip(const Polygon &subject, const Polygon &clipping);
+
+  /**
+   * Doing union on subject and clipping.
+   *
+   */
+  static Polygon Union(const Polygon &subject, const Polygon &clipping);
 
 private:
   Vertex *allocate_vertex(const Point &p);

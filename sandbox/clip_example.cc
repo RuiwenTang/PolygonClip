@@ -20,19 +20,9 @@ int main(int argc, const char **argv) {
   pc::Polygon clipping;
   clipping.append_vertices(points2);
 
-  pc::Polygon result = pc::Polygon::Clip(subject, clipping);
+  pc::Polygon clip_result = pc::Polygon::Clip(subject, clipping);
 
-  std::cout << " -------------clip result-------------- " << std::endl;
-
-  for (auto head : result.get_vertices()) {
-    auto curr = head;
-    while (curr->next && curr->next != head) {
-      std::cout << "E {" << curr->point.x << "," << curr->point.y << "} -> {"
-                << curr->next->point.x << "," << curr->next->point.y << "}"
-                << std::endl;
-      curr = curr->next;
-    }
-  }
+  pc::Polygon union_result = pc::Polygon::Union(subject, clipping);
 
   pc::example::App app("clip-example");
 
@@ -45,9 +35,12 @@ int main(int argc, const char **argv) {
   p2_render.init(clipping, true);
 
   pc::example::PolygonRender res_render(800, 800, 50.f, 50.f);
-  res_render.init(result, false);
+  res_render.init(clip_result, false);
 
-  app.loop([&p1_render, &p2_render, &res_render]() {
+  pc::example::PolygonRender union_render(800, 800, 50.f, 150.f);
+  union_render.init(union_result, false);
+
+  app.loop([&p1_render, &p2_render, &res_render, &union_render]() {
     glClearColor(1.f, 1.f, 1.f, 1.f);
     glClearStencil(0);
     glClear(GL_COLOR_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
@@ -56,11 +49,14 @@ int main(int argc, const char **argv) {
     p2_render.draw({0.f, 1.f, 0.f, 1.f});
 
     res_render.draw({0.f, 0.f, 1.f, 1.f});
+
+    union_render.draw({0.f, 0.f, 1.f, 1.f});
   });
 
   p1_render.terminate();
   p2_render.terminate();
   res_render.terminate();
+  union_render.terminate();
 
   app.terminate();
 
