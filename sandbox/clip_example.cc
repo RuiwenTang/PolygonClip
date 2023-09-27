@@ -2,8 +2,6 @@
 #include "example.hpp"
 #include "polygon_clip.hpp"
 
-#include <iostream>
-
 int main(int argc, const char **argv) {
 
   std::vector<pc::Point> points{
@@ -37,10 +35,7 @@ int main(int argc, const char **argv) {
   pc::example::PolygonRender res_render(800, 800, 50.f, 50.f);
   res_render.init(clip_result, false);
 
-  pc::example::PolygonRender union_render(800, 800, 50.f, 150.f);
-  union_render.init(union_result, true);
-
-  app.loop([&p1_render, &p2_render, &res_render, &union_render]() {
+  app.loop([&p1_render, &p2_render, &res_render]() {
     glClearColor(1.f, 1.f, 1.f, 1.f);
     glClearStencil(0);
     glClear(GL_COLOR_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
@@ -49,14 +44,11 @@ int main(int argc, const char **argv) {
     p2_render.draw({0.f, 1.f, 0.f, 1.f});
 
     res_render.draw({0.f, 0.f, 1.f, 1.f});
-
-    union_render.draw({0.f, 0.f, 1.f, 1.f});
   });
 
   p1_render.terminate();
   p2_render.terminate();
   res_render.terminate();
-  union_render.terminate();
 
   app.terminate();
 
