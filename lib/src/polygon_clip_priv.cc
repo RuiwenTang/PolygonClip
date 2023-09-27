@@ -188,7 +188,6 @@ Polygon ClipAlgorithm::do_union(Polygon subject, Polygon clipping) {
           do {
             curr = curr->prev;
 
-            pts.emplace_back(curr->point);
           } while (!curr->intersect);
         } else {
           do {

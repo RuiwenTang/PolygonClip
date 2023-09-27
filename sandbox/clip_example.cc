@@ -38,7 +38,7 @@ int main(int argc, const char **argv) {
   res_render.init(clip_result, false);
 
   pc::example::PolygonRender union_render(800, 800, 50.f, 150.f);
-  union_render.init(union_result, false);
+  union_render.init(union_result, true);
 
   app.loop([&p1_render, &p2_render, &res_render, &union_render]() {
     glClearColor(1.f, 1.f, 1.f, 1.f);
